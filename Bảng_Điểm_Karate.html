@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <title>KARATE SCOREBOARD - FINAL FIX</title>
+    <style>
+        body { background-color: black; color: white; font-family: Arial, sans-serif; text-align: center; margin: 0; overflow: hidden; }
+        .header { display: flex; justify-content: space-around; padding: 5px; }
+        .player-box { width: 49%; border-radius: 15px; padding: 5px; border: 3px solid white; }
+        .aka { background-color: #d32f2f; } 
+        .ao { background-color: #1976d2; }  
+        .player-name { font-size: 2.2em; font-weight: bold; margin: 0; text-transform: uppercase; }
+
+        .score-wrap { display: flex; align-items: center; justify-content: center; gap: 15px; }
+        .score { font-size: 25em; font-weight: bold; line-height: 0.8; margin: 0; }
+        
+        .senshu { width: 45px; height: 45px; border: 4px solid white; border-radius: 50%; cursor: pointer; }
+        .senshu.active { background-color: #ffd700; box-shadow: 0 0 15px #ffd700; }
+
+        /* VÙNG THỜI GIAN */
+        .timer-container {
+            position: relative;
+            height: 14em; 
+            display: flex;
+            justify-content: center;
+            align-items: flex-end; /* Căn bằng chân */
+            margin-top: 10px;
+        }
+        .timer { 
+            font-size: 16em; color: #ffff00; font-family: monospace; 
+            font-weight: bold; cursor: text;
+            line-height: 0.85;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        /* SỐ TÍC TẮC: Nằm sát chân số giây chính */
+        .mili { 
+            position: absolute;
+            left: calc(50% + 2.3em); 
+            font-size: 8em; 
+            color: #f00; 
+            font-family: monospace; 
+            font-weight: bold;
+            line-height: 0.85; /* Khớp line-height với số chính */
+            margin-bottom: 0;
+        }
+        
+        .point-controls { display: flex; justify-content: center; gap: 5px; margin-bottom: 5px; }
+        button { padding: 4px 10px; font-size: 0.65em; cursor: pointer; border-radius: 4px; border: none; font-weight: bold; }
+        .btn-plus { background: white; color: black; }
+        .btn-minus { background: #333; color: white; border: 1px solid #777; }
+        
+        .penalty-row { display: flex; justify-content: center; gap: 4px; margin-top: 5px; }
+        .penalty { width: 32px; height: 32px; border: 2px solid white; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
+        .penalty.active { background-color: #ffeb3b; color: black; } 
+        
+        .main-nav { background: #222; padding: 5px; position: fixed; bottom: 0; width: 100%; display: flex; justify-content: center; gap: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="player-box aka">
+        <div class="player-name" contenteditable="true">AKA</div>
+        <div class="score-wrap"><div id="scoreAka" class="score">0</div><div id="senshuAka" class="senshu" onclick="toggleSenshu('Aka')"></div></div>
+        <div class="point-controls">
+            <button class="btn-plus" onclick="addScore('Aka', 1)">+1</button><button class="btn-plus" onclick="addScore('Aka', 2)">+2</button><button class="btn-plus" onclick="addScore('Aka', 3)">+3</button><button class="btn-minus" onclick="addScore('Aka', -1)">-1</button>
+        </div>
+        <div class="penalty-row">
+            <div id="pAka1" class="penalty" onclick="toggleP('pAka1')">C</div><div id="pAka2" class="penalty" onclick="toggleP('pAka2')">C</div><div id="pAka3" class="penalty" onclick="toggleP('pAka3')">C</div><div id="pAka4" class="penalty" onclick="toggleP('pAka4')">HC</div><div id="pAka5" class="penalty" onclick="toggleP('pAka5')">H</div>
+        </div>
+    </div>
+
+    <div class="player-box ao">
+        <div class="player-name" contenteditable="true">AO</div>
+        <div class="score-wrap"><div id="senshuAo" class="senshu" onclick="toggleSenshu('Ao')"></div><div id="scoreAo" class="score">0</div></div>
+        <div class="point-controls">
+            <button class="btn-plus" onclick="addScore('Ao', 1)">+1</button><button class="btn-plus" onclick="addScore('Ao', 2)">+2</button><button class="btn-plus" onclick="addScore('Ao', 3)">+3</button><button class="btn-minus" onclick="addScore('Ao', -1)">-1</button>
+        </div>
+        <div class="penalty-row">
+            <div id="pAo1" class="penalty" onclick="toggleP('pAo1')">C</div><div id="pAo2" class="penalty" onclick="toggleP('pAo2')">C</div><div id="pAo3" class="penalty" onclick="toggleP('pAo3')">C</div><div id="pAo4" class="penalty" onclick="toggleP('pAo4')">HC</div><div id="pAo5" class="penalty" onclick="toggleP('pAo5')">H</div>
+        </div>
+    </div>
+</div>
+
+<div class="timer-container">
+    <span id="timer" class="timer" contenteditable="true" onblur="syncTime()" onfocus="stopTimer()">03:00</span>
+    <span id="mili" class="mili"></span>
+</div>
+
+<div class="main-nav">
+    <button style="background: #4CAF50; color: white;" onclick="startTimer()">START</button>
+    <button style="background: #f44336; color: white;" onclick="stopTimer()">STOP</button>
+    <button style="background: #555; color: white;" onclick="setTime(180)">3:00</button>
+    <button style="background: #555; color: white;" onclick="setTime(120)">2:00</button>
+    <button style="background: #555; color: white;" onclick="setTime(15)">0:15</button>
+    <button style="background: #777; color: white;" onclick="resetMatch()">RESET</button>
+</div>
+
+<script>
+    let totalMs = 180000;
+    let timerId = null;
+    let scores = { Aka: 0, Ao: 0 };
+    let hasPlayed15sBuzzer = false;
+
+    function syncTime() {
+        const display = document.getElementById('timer').innerText;
+        const parts = display.split(':');
+        if (parts.length === 2) {
+            totalMs = ((parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0)) * 1000;
+        }
+        updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+        if (document.activeElement === document.getElementById('timer')) return;
+        
+        let displaySecs = Math.max(0, Math.ceil(totalMs / 1000));
+        let m = Math.floor(displaySecs / 60);
+        let s = displaySecs % 60;
+        
+        // Sửa lỗi hiển thị: Khi còn 15.00s thực tế, displaySecs sẽ là 15
+        document.getElementById('timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        
+        // KIỂM TRA MỐC 15 GIÂY (15000 mili giây)
+        if (totalMs <= 15000 && totalMs >= 0) {
+            document.getElementById('timer').style.color = "#f00";
+            let ms = Math.floor((totalMs % 1000) / 10);
+            document.getElementById('mili').innerText = "." + ms.toString().padStart(2, '0');
+        } else {
+            document.getElementById('timer').style.color = "#ff0";
+            document.getElementById('mili').innerText = "";
+        }
+    }
+
+    function playBuzzer(duration) {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(400, audioCtx.currentTime); 
+            oscillator.connect(gainNode); gainNode.connect(audioCtx.destination);
+            oscillator.start(); setTimeout(() => oscillator.stop(), duration);
+        } catch(e) { console.log("Audio error"); }
+    }
+
+    function startTimer() { 
+        if (document.activeElement === document.getElementById('timer')) document.getElementById('timer').blur();
+        if(!timerId && totalMs > 0) {
+            let lastTick = Date.now();
+            timerId = setInterval(() => { 
+                let now = Date.now();
+                totalMs -= (now - lastTick);
+                lastTick = now;
+
+                // CHUÔNG REO NGAY LẬP TỨC KHI CHẠM 15 GIÂY
+                if (totalMs <= 15005 && !hasPlayed15sBuzzer) { 
+                    playBuzzer(1000); 
+                    hasPlayed15sBuzzer = true;
+                }
+
+                if (totalMs <= 0) {
+                    totalMs = 0; updateTimerDisplay(); stopTimer(); playBuzzer(3000); 
+                } else {
+                    updateTimerDisplay();
+                }
+            }, 20); // Tăng tốc độ vòng lặp để bắt kịp mili giây
+        }
+    }
+
+    function stopTimer() { clearInterval(timerId); timerId = null; }
+    function setTime(sec) { stopTimer(); totalMs = sec * 1000; hasPlayed15sBuzzer = false; updateTimerDisplay(); }
+    function addScore(player, pts) { scores[player] = Math.max(0, scores[player] + pts); document.getElementById(`score${player}`).innerText = scores[player]; }
+    function toggleSenshu(player) {
+        let other = (player === 'Aka') ? 'Ao' : 'Aka';
+        document.getElementById(`senshu${other}`).classList.remove('active');
+        document.getElementById(`senshu${player}`).classList.toggle('active');
+    }
+    function toggleP(id) { document.getElementById(id).classList.toggle('active'); }
+    function resetMatch() {
+        if(!confirm("Xóa kết quả?")) return;
+        stopTimer(); totalMs = 180000; hasPlayed15sBuzzer = false; scores = { Aka: 0, Ao: 0 };
+        document.getElementById('scoreAka').innerText = "0"; document.getElementById('scoreAo').innerText = "0";
+        document.querySelectorAll('.penalty, .senshu').forEach(el => el.classList.remove('active'));
+        updateTimerDisplay();
+    }
+</script>
+</body>
+</html>
