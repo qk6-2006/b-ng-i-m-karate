@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="utf-8">
-    <title>KARATE SCOREBOARD - CHUẨN</title>
+    <title>KARATE SCOREBOARD - BLACK OVERLAY</title>
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #1a1a1a; --aka: #c00000; --ao: #0070c0; --yellow: #ffff00; --red: #ff0000; }
@@ -52,12 +52,12 @@
         .dropdown div { padding: 12px; cursor: pointer; text-align: center; border-bottom: 1px solid #444; }
         .show { display: block; }
 
-        /* Overlay tối hẳn */
+        /* --- PHẦN CHỈNH SỬA: OVERLAY TỐI HẲN --- */
         #overlay {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #000000;
+            background-color: #000000; /* Màu đen tuyệt đối để tối hẳn sau lưng */
             z-index: 1000;
             flex-direction: column;
             justify-content: center;
@@ -264,6 +264,7 @@
         let m = Math.floor(totalSec / 60).toString().padStart(2, '0');
         let s = (totalSec % 60).toString().padStart(2, '0');
         document.getElementById('ov-time').innerText = m + ":" + s;
+        // Đổi màu đỏ khi dưới 10s trong overlay
         if (totalSec < 10) document.getElementById('ov-time').style.color = 'var(--red)';
         else document.getElementById('ov-time').style.color = 'var(--yellow)';
     }
