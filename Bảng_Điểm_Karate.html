@@ -2,190 +2,275 @@
 <html lang="vi">
 <head>
     <meta charset="utf-8">
-    <title>KARATE SCOREBOARD - FINAL FIX</title>
+    <title>KARATE SCOREBOARD - BLACK OVERLAY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
-        body { background-color: black; color: white; font-family: Arial, sans-serif; text-align: center; margin: 0; overflow: hidden; }
-        .header { display: flex; justify-content: space-around; padding: 5px; }
-        .player-box { width: 49%; border-radius: 15px; padding: 5px; border: 3px solid white; }
-        .aka { background-color: #d32f2f; } 
-        .ao { background-color: #1976d2; }  
-        .player-name { font-size: 2.2em; font-weight: bold; margin: 0; text-transform: uppercase; }
-
-        .score-wrap { display: flex; align-items: center; justify-content: center; gap: 15px; }
-        .score { font-size: 25em; font-weight: bold; line-height: 0.8; margin: 0; }
+        :root { --bg: #1a1a1a; --aka: #c00000; --ao: #0070c0; --yellow: #ffff00; --red: #ff0000; }
+        body { background-color: var(--bg); color: white; font-family: Arial, sans-serif; margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; user-select: none; }
         
-        .senshu { width: 45px; height: 45px; border: 4px solid white; border-radius: 50%; cursor: pointer; }
-        .senshu.active { background-color: #ffd700; box-shadow: 0 0 15px #ffd700; }
+        /* Layout */
+        .score-container { display: flex; flex: 1; }
+        .side { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .aka { background-color: var(--aka); }
+        .ao { background-color: var(--ao); }
+        
+        .name-input { background: transparent; border: none; color: white; font-size: 3rem; font-weight: bold; text-align: center; width: 80%; outline: none; margin-bottom: 10px; }
+        .score-row { display: flex; align-items: center; gap: 20px; }
+        .score-val { font-size: 18rem; font-weight: bold; line-height: 1; font-family: 'Share Tech Mono', monospace; }
+        
+        button { cursor: pointer; border: none; outline: none; transition: transform 0.1s; font-weight: bold; }
+        button:active { transform: scale(0.9); }
+        
+        .senshu { width: 50px; height: 50px; border: 4px solid white; border-radius: 50%; }
+        .senshu.active { background-color: var(--yellow); border-color: var(--yellow); box-shadow: 0 0 15px var(--yellow); }
+        
+        .btn-group { display: flex; gap: 10px; margin: 20px 0; }
+        .btn-plus { padding: 12px 20px; font-size: 1.2rem; border-radius: 5px; background: #eee; color: #333; }
+        
+        .penalty-row { display: flex; gap: 8px; }
+        .penalty { width: 55px; height: 50px; border: 2px solid white; background: none; color: white; border-radius: 5px; font-size: 1.1rem; }
+        .penalty.active { background-color: var(--yellow); color: black; border-color: var(--yellow); }
+        
+        .timer-section { background-color: #222; padding: 20px 0; display: flex; flex-direction: column; align-items: center; border-top: 5px solid #333; }
+        .timer-display { display: flex; align-items: center; font-family: 'Share Tech Mono', monospace; min-height: 11rem; }
+        .t-input { background: transparent; border: none; color: inherit; font-family: inherit; font-size: 14rem; font-weight: bold; width: 2ch; text-align: center; outline: none; }
+        .dots { font-size: 11rem; font-weight: bold; margin-bottom: 20px; }
+        .time-sub { font-size: 8rem; display: none; margin-left: 10px; }
+        
+        .yellow { color: var(--yellow); }
+        .red { color: var(--red); }
+        
+        .controls { display: flex; gap: 15px; align-items: center; margin-top: 15px; }
+        .btn-timer { padding: 12px 25px; border-radius: 6px; color: white; text-transform: uppercase; }
+        .btn-start { background-color: #70ad47; }
+        .btn-stop { background-color: #c00000; }
+        
+        .preset-wrap { position: relative; display: flex; height: 45px; }
+        .preset-val { background: #7f7f7f; padding: 0 15px; border-radius: 5px 0 0 5px; line-height: 45px; }
+        .preset-arrow { background: #555; padding: 0 10px; border-radius: 0 5px 5px 0; color: white; }
+        .dropdown { display: none; position: absolute; bottom: 110%; left: 0; background: #333; width: 100%; z-index: 10; border: 1px solid #555; }
+        .dropdown div { padding: 12px; cursor: pointer; text-align: center; border-bottom: 1px solid #444; }
+        .show { display: block; }
 
-        /* VÙNG THỜI GIAN */
-        .timer-container {
-            position: relative;
-            height: 14em; 
-            display: flex;
+        /* --- PHẦN CHỈNH SỬA: OVERLAY TỐI HẲN --- */
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #000000; /* Màu đen tuyệt đối để tối hẳn sau lưng */
+            z-index: 1000;
+            flex-direction: column;
             justify-content: center;
-            align-items: flex-end; /* Căn bằng chân */
-            margin-top: 10px;
+            align-items: center;
         }
-        .timer { 
-            font-size: 16em; color: #ffff00; font-family: monospace; 
-            font-weight: bold; cursor: text;
-            line-height: 0.85;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        /* SỐ TÍC TẮC: Nằm sát chân số giây chính */
-        .mili { 
-            position: absolute;
-            left: calc(50% + 2.3em); 
-            font-size: 8em; 
-            color: #f00; 
-            font-family: monospace; 
-            font-weight: bold;
-            line-height: 0.85; /* Khớp line-height với số chính */
-            margin-bottom: 0;
-        }
-        
-        .point-controls { display: flex; justify-content: center; gap: 5px; margin-bottom: 5px; }
-        button { padding: 4px 10px; font-size: 0.65em; cursor: pointer; border-radius: 4px; border: none; font-weight: bold; }
-        .btn-plus { background: white; color: black; }
-        .btn-minus { background: #333; color: white; border: 1px solid #777; }
-        
-        .penalty-row { display: flex; justify-content: center; gap: 4px; margin-top: 5px; }
-        .penalty { width: 32px; height: 32px; border: 2px solid white; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
-        .penalty.active { background-color: #ffeb3b; color: black; } 
-        
-        .main-nav { background: #222; padding: 5px; position: fixed; bottom: 0; width: 100%; display: flex; justify-content: center; gap: 10px; }
+        .ov-timer { font-family: 'Share Tech Mono', monospace; font-size: 25rem; color: var(--yellow); font-weight: bold; line-height: 1; }
+        .ov-controls { margin-top: 50px; display: flex; gap: 30px; }
+        .btn-icon { background: #c00000; color: white; font-size: 1.5rem; width: 50px; height: 50px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
-<body>
+<body onclick="initAudio()">
 
-<div class="header">
-    <div class="player-box aka">
-        <div class="player-name" contenteditable="true">AKA</div>
-        <div class="score-wrap"><div id="scoreAka" class="score">0</div><div id="senshuAka" class="senshu" onclick="toggleSenshu('Aka')"></div></div>
-        <div class="point-controls">
-            <button class="btn-plus" onclick="addScore('Aka', 1)">+1</button><button class="btn-plus" onclick="addScore('Aka', 2)">+2</button><button class="btn-plus" onclick="addScore('Aka', 3)">+3</button><button class="btn-minus" onclick="addScore('Aka', -1)">-1</button>
+    <div class="score-container">
+        <div class="side aka">
+            <input type="text" class="name-input" value="AKA">
+            <div class="score-row">
+                <div class="score-val" id="scoreAka">0</div>
+                <div class="senshu" id="senshuAka" onclick="toggleSenshu('Aka')"></div>
+            </div>
+            <div class="btn-group">
+                <button class="btn-plus" onclick="changeScore('scoreAka', 1)">+1</button>
+                <button class="btn-plus" onclick="changeScore('scoreAka', 2)">+2</button>
+                <button class="btn-plus" onclick="changeScore('scoreAka', 3)">+3</button>
+                <button class="btn-plus" onclick="changeScore('scoreAka', -1)">-1</button>
+            </div>
+            <div class="penalty-row">
+                <button class="penalty" onclick="this.classList.toggle('active')">C1</button>
+                <button class="penalty" onclick="this.classList.toggle('active')">C2</button>
+                <button class="penalty" onclick="this.classList.toggle('active')">C3</button>
+                <button class="penalty" onclick="this.classList.toggle('active')">HC</button>
+                <button class="penalty" onclick="this.classList.toggle('active')">H</button>
+            </div>
         </div>
-        <div class="penalty-row">
-            <div id="pAka1" class="penalty" onclick="toggleP('pAka1')">C</div><div id="pAka2" class="penalty" onclick="toggleP('pAka2')">C</div><div id="pAka3" class="penalty" onclick="toggleP('pAka3')">C</div><div id="pAka4" class="penalty" onclick="toggleP('pAka4')">HC</div><div id="pAka5" class="penalty" onclick="toggleP('pAka5')">H</div>
+
+        <div class="side ao">
+            <input type="text" class="name-input" value="AO">
+            <div class="score-row">
+                <div class="senshu" id="senshuAo" onclick="toggleSenshu('Ao')"></div>
+                <div class="score-val" id="scoreAo">0</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn-plus" onclick="changeScore('scoreAo', 1)">+1</button>
+                <button class="btn-plus" onclick="changeScore('scoreAo', 2)">+2</button>
+                <button class="btn-plus" onclick="changeScore('scoreAo', 3)">+3</button>
+                <button class="btn-plus" onclick="changeScore('scoreAo', -1)">-1</button>
+            </div>
+            <div class="penalty-row">
+                <button class="penalty" onclick="this.classList.toggle('active')">C1</button>
+                <button class="penalty" onclick="this.classList.toggle('active')">C2</button>
+                <button class="penalty" onclick="this.classList.toggle('active')">C3</button>
+                <button class="penalty" onclick="this.classList.toggle('active')">HC</button>
+                <button class="penalty" onclick="this.classList.toggle('active')">H</button>
+            </div>
         </div>
     </div>
 
-    <div class="player-box ao">
-        <div class="player-name" contenteditable="true">AO</div>
-        <div class="score-wrap"><div id="senshuAo" class="senshu" onclick="toggleSenshu('Ao')"></div><div id="scoreAo" class="score">0</div></div>
-        <div class="point-controls">
-            <button class="btn-plus" onclick="addScore('Ao', 1)">+1</button><button class="btn-plus" onclick="addScore('Ao', 2)">+2</button><button class="btn-plus" onclick="addScore('Ao', 3)">+3</button><button class="btn-minus" onclick="addScore('Ao', -1)">-1</button>
+    <div class="timer-section">
+        <div class="timer-display">
+            <input type="text" id="min-in" class="t-input yellow" value="03" maxlength="2" onblur="sync()">
+            <span class="dots yellow" id="dots">:</span>
+            <input type="text" id="sec-in" class="t-input yellow" value="00" maxlength="2" onblur="sync()">
+            <span id="sub" class="time-sub red">.00</span>
         </div>
-        <div class="penalty-row">
-            <div id="pAo1" class="penalty" onclick="toggleP('pAo1')">C</div><div id="pAo2" class="penalty" onclick="toggleP('pAo2')">C</div><div id="pAo3" class="penalty" onclick="toggleP('pAo3')">C</div><div id="pAo4" class="penalty" onclick="toggleP('pAo4')">HC</div><div id="pAo5" class="penalty" onclick="toggleP('pAo5')">H</div>
+        <div class="controls">
+            <button class="btn-timer btn-start" onclick="start()">START</button>
+            <button class="btn-timer btn-stop" onclick="stop()">STOP</button>
+            <div class="preset-wrap">
+                <div class="preset-val" id="cur-p">03:00</div>
+                <button class="preset-arrow" onclick="toggleD(event)">⌵</button>
+                <div class="dropdown" id="drop">
+                    <div onclick="set(180, '03:00')">03:00</div>
+                    <div onclick="set(120, '02:00')">02:00</div>
+                    <div onclick="set(90, '01:30')">01:30</div>
+                    <div onclick="set(60, '01:00')">01:00</div>
+                    <div onclick="set(15, '00:15')">00:15</div>
+                </div>
+            </div>
+            <button class="btn-timer" style="background:#555" onclick="location.reload()">RESET</button>
+            <button class="btn-icon" onclick="openOverlay()">🕒</button>
         </div>
     </div>
-</div>
 
-<div class="timer-container">
-    <span id="timer" class="timer" contenteditable="true" onblur="syncTime()" onfocus="stopTimer()">03:00</span>
-    <span id="mili" class="mili"></span>
-</div>
-
-<div class="main-nav">
-    <button style="background: #4CAF50; color: white;" onclick="startTimer()">START</button>
-    <button style="background: #f44336; color: white;" onclick="stopTimer()">STOP</button>
-    <button style="background: #555; color: white;" onclick="setTime(180)">3:00</button>
-    <button style="background: #555; color: white;" onclick="setTime(120)">2:00</button>
-    <button style="background: #555; color: white;" onclick="setTime(15)">0:15</button>
-    <button style="background: #777; color: white;" onclick="resetMatch()">RESET</button>
-</div>
+    <div id="overlay">
+        <div id="ov-time" class="ov-timer">01:00</div>
+        <div class="ov-controls">
+            <button class="btn-timer btn-start" onclick="startOV()">START</button>
+            <button class="btn-timer btn-stop" onclick="stopOV()">STOP</button>
+            <button class="btn-timer" style="background:#555" onclick="closeOverlay()">ĐÓNG</button>
+        </div>
+    </div>
 
 <script>
-    let totalMs = 180000;
-    let timerId = null;
-    let scores = { Aka: 0, Ao: 0 };
-    let hasPlayed15sBuzzer = false;
+    let timeLeft = 180980; 
+    let timerId = null, audioCtx = null, played15s = false;
+    let ovTimeLeft = 60980;
+    let ovTimerId = null;
 
-    function syncTime() {
-        const display = document.getElementById('timer').innerText;
-        const parts = display.split(':');
-        if (parts.length === 2) {
-            totalMs = ((parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0)) * 1000;
-        }
-        updateTimerDisplay();
+    function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    
+    function changeScore(id, val) {
+        let el = document.getElementById(id);
+        el.innerText = Math.max(0, parseInt(el.innerText) + val);
+    }
+    
+    function toggleSenshu(side) {
+        const t = document.getElementById('senshu' + side);
+        const o = side === 'Aka' ? document.getElementById('senshuAo') : document.getElementById('senshuAka');
+        t.classList.toggle('active'); if(t.classList.contains('active')) o.classList.remove('active');
     }
 
-    function updateTimerDisplay() {
-        if (document.activeElement === document.getElementById('timer')) return;
-        
-        let displaySecs = Math.max(0, Math.ceil(totalMs / 1000));
-        let m = Math.floor(displaySecs / 60);
-        let s = displaySecs % 60;
-        
-        // Sửa lỗi hiển thị: Khi còn 15.00s thực tế, displaySecs sẽ là 15
-        document.getElementById('timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-        
-        // KIỂM TRA MỐC 15 GIÂY (15000 mili giây)
-        if (totalMs <= 15000 && totalMs >= 0) {
-            document.getElementById('timer').style.color = "#f00";
-            let ms = Math.floor((totalMs % 1000) / 10);
-            document.getElementById('mili').innerText = "." + ms.toString().padStart(2, '0');
+    function sync() {
+        let m = parseInt(document.getElementById('min-in').value) || 0;
+        let s = parseInt(document.getElementById('sec-in').value) || 0;
+        timeLeft = (m * 60 + s) * 1000 + 980;
+        updateUI();
+    }
+    
+    function set(s, t) {
+        stop(); timeLeft = (s * 1000) + 980;
+        document.getElementById('cur-p').innerText = t;
+        played15s = false; updateUI();
+    }
+    
+    function toggleD(e) { e.stopPropagation(); document.getElementById('drop').classList.toggle('show'); }
+
+    function updateUI() {
+        const minI = document.getElementById('min-in'), secI = document.getElementById('sec-in');
+        const dots = document.getElementById('dots'), sub = document.getElementById('sub');
+        if (timeLeft >= 16000) {
+            let displaySec = Math.floor((timeLeft - 1) / 1000); 
+            minI.value = Math.floor(displaySec / 60).toString().padStart(2, '0');
+            secI.value = (displaySec % 60).toString().padStart(2, '0');
+            minI.className = secI.className = dots.className = "t-input yellow";
+            sub.style.display = "none";
         } else {
-            document.getElementById('timer').style.color = "#ff0";
-            document.getElementById('mili').innerText = "";
+            let s = Math.floor(timeLeft / 1000); 
+            let ms = Math.floor((timeLeft % 1000) / 10);
+            minI.value = "00";
+            secI.value = s.toString().padStart(2, '0');
+            sub.innerText = "." + ms.toString().padStart(2, '0');
+            minI.className = secI.className = dots.className = "t-input red";
+            sub.style.display = "inline";
         }
     }
 
-    function playBuzzer(duration) {
-        try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.type = 'square';
-            oscillator.frequency.setValueAtTime(400, audioCtx.currentTime); 
-            oscillator.connect(gainNode); gainNode.connect(audioCtx.destination);
-            oscillator.start(); setTimeout(() => oscillator.stop(), duration);
-        } catch(e) { console.log("Audio error"); }
+    function start() {
+        if (timerId || timeLeft <= 0) return;
+        initAudio();
+        let last = Date.now();
+        timerId = setInterval(() => {
+            let delta = Date.now() - last;
+            last = Date.now();
+            let old = timeLeft;
+            timeLeft -= delta;
+            if (old >= 16000 && timeLeft < 16000) {
+                if(!played15s) { ring(1000); played15s = true; }
+            }
+            if (timeLeft <= 0) { timeLeft = 0; stop(); updateUI(); ring(2000); }
+            else updateUI();
+        }, 20);
     }
 
-    function startTimer() { 
-        if (document.activeElement === document.getElementById('timer')) document.getElementById('timer').blur();
-        if(!timerId && totalMs > 0) {
-            let lastTick = Date.now();
-            timerId = setInterval(() => { 
-                let now = Date.now();
-                totalMs -= (now - lastTick);
-                lastTick = now;
-
-                // CHUÔNG REO NGAY LẬP TỨC KHI CHẠM 15 GIÂY
-                if (totalMs <= 15005 && !hasPlayed15sBuzzer) { 
-                    playBuzzer(1000); 
-                    hasPlayed15sBuzzer = true;
-                }
-
-                if (totalMs <= 0) {
-                    totalMs = 0; updateTimerDisplay(); stopTimer(); playBuzzer(3000); 
-                } else {
-                    updateTimerDisplay();
-                }
-            }, 20); // Tăng tốc độ vòng lặp để bắt kịp mili giây
-        }
+    function stop() { clearInterval(timerId); timerId = null; }
+    
+    function ring(d) {
+        if(!audioCtx) return;
+        let o = audioCtx.createOscillator();
+        let g = audioCtx.createGain();
+        o.type = 'square'; o.frequency.value = 450;
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(); setTimeout(() => o.stop(), d);
     }
 
-    function stopTimer() { clearInterval(timerId); timerId = null; }
-    function setTime(sec) { stopTimer(); totalMs = sec * 1000; hasPlayed15sBuzzer = false; updateTimerDisplay(); }
-    function addScore(player, pts) { scores[player] = Math.max(0, scores[player] + pts); document.getElementById(`score${player}`).innerText = scores[player]; }
-    function toggleSenshu(player) {
-        let other = (player === 'Aka') ? 'Ao' : 'Aka';
-        document.getElementById(`senshu${other}`).classList.remove('active');
-        document.getElementById(`senshu${player}`).classList.toggle('active');
+    function openOverlay() {
+        stop();
+        document.getElementById('overlay').style.display = 'flex';
+        ovTimeLeft = 60980; 
+        updateUIOV();
     }
-    function toggleP(id) { document.getElementById(id).classList.toggle('active'); }
-    function resetMatch() {
-        if(!confirm("Xóa kết quả?")) return;
-        stopTimer(); totalMs = 180000; hasPlayed15sBuzzer = false; scores = { Aka: 0, Ao: 0 };
-        document.getElementById('scoreAka').innerText = "0"; document.getElementById('scoreAo').innerText = "0";
-        document.querySelectorAll('.penalty, .senshu').forEach(el => el.classList.remove('active'));
-        updateTimerDisplay();
+
+    function closeOverlay() {
+        stopOV();
+        document.getElementById('overlay').style.display = 'none';
     }
+
+    function startOV() {
+        if (ovTimerId || ovTimeLeft <= 0) return;
+        initAudio();
+        let last = Date.now();
+        ovTimerId = setInterval(() => {
+            let delta = Date.now() - last;
+            last = Date.now();
+            ovTimeLeft -= delta;
+            if (ovTimeLeft <= 0) { ovTimeLeft = 0; stopOV(); ring(2000); }
+            updateUIOV();
+        }, 20);
+    }
+
+    function stopOV() { clearInterval(ovTimerId); ovTimerId = null; }
+
+    function updateUIOV() {
+        let totalSec = Math.floor((ovTimeLeft - 1) / 1000);
+        if (totalSec < 0) totalSec = 0;
+        let m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+        let s = (totalSec % 60).toString().padStart(2, '0');
+        document.getElementById('ov-time').innerText = m + ":" + s;
+        // Đổi màu đỏ khi dưới 10s trong overlay
+        if (totalSec < 10) document.getElementById('ov-time').style.color = 'var(--red)';
+        else document.getElementById('ov-time').style.color = 'var(--yellow)';
+    }
+
+    window.onclick = () => document.getElementById('drop').classList.remove('show');
+    updateUI();
 </script>
 </body>
 </html>
